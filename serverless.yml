@@ -1,0 +1,76 @@
+service: serverless
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  profile: Deen
+  environment:
+    tableName: ${self:custom.tableName}
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - dynamodb:*
+      Resource: "*"
+
+plugins:
+  - serverless-s3-sync
+  - serverless-webpack
+
+package:
+  individually: true
+
+custom:
+  tableName: usersList
+  s3Sync:
+    - bucketName: deen-123123
+      localDir: Data
+
+functions:
+  getUser:
+    handler: lambdas/endpoints/getUser.handler
+    events:
+      - http:
+          path: get-user/{ID}
+          method: GET
+          cors: true
+  getUserName:
+    handler: lambdas/endpoints/getUserName.handler
+    events:
+      - http:
+          path: getUserName/{ID}
+          method: GET
+          cors: true
+   getUsers:
+    handler: lambdas/endpoints/getUsers.handler
+    events:
+      - http:
+          path: getUsers
+          method: GET
+          cors: true
+  createUser:
+    handler: lambdas/endpoints/createUser.handler
+    events:
+      - http:
+          path: createUser/{ID}
+          method: POST
+          cors: true
+
+resources:
+  Resources:
+    DemoBucketUpload:
+      Type: AWS::S3::Bucket
+      Properties:
+        BucketName: deen-123123
+    MyDynamoDbTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${self:custom.tableName}
+        AttributeDefinitions:
+          - AttributeName: ID
+            AttributeType: S
+        KeySchema:
+          - AttributeName: ID
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
